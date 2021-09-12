@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "OD5bvhckF1VgddDRvA/J4xDe7fYJTIMpmuqwroeC5kyHLw0dY9AMo4iiTp9aUJZVmCNpWovsy23bCJMh2vEldQ==",
+  "success": true,
+  "projectFilePath": "/home/kirich/Documents/Edu/DotNet/Determinant/src/Program/Program.csproj",
+  "expectedPackageFiles": [
+    "/home/kirich/.nuget/packages/microsoft.aspnetcore.app.ref/5.0.0/microsoft.aspnetcore.app.ref.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
