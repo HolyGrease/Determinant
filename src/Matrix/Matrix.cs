@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using ThreadPool;
 
 namespace Matrix
 {
@@ -11,6 +13,17 @@ namespace Matrix
             matrix = new int[2,2] {{1, 0}, {0, 1}};
         }
 
+        public Matrix(uint size)
+        {
+            Random random = new Random();
+
+            this.matrix = new int[size, size];
+
+            for (int i = 0; i < this.matrix.GetLength(0); i++)
+                for (int j = 0; j < this.matrix.GetLength(1); j++)
+                    this.matrix[i, j] = random.Next();
+        }
+
         public Matrix(int[,] matrix)
         {
             this.matrix = matrix;
@@ -18,6 +31,9 @@ namespace Matrix
 
         public int Determinant()
         {
+            if (this.matrix.GetLength(0) == 1)
+                return this.matrix[0, 0];
+
             if (this.matrix.GetLength(0) == 2)
                 return this.matrix[0, 0] * this.matrix[1, 1] -
                     this.matrix[0, 1] * this.matrix[1, 0];
@@ -32,6 +48,8 @@ namespace Matrix
                 else
                     summ -= value;
             }
+            
+            GC.Collect();
 
             return summ;
         }
@@ -68,6 +86,50 @@ namespace Matrix
                     Console.Write(this.matrix[i, j].ToString() + " ");
                 Console.WriteLine();
             }
+        }
+
+        class Task: ITask<int>
+        {
+            private Matrix matrix;
+            private int value;
+
+            public Task(Matrix matrix, int value)
+            {
+                this.matrix = matrix;
+                this.value = value;
+            }
+
+            public int Run()
+            {
+                return value * this.matrix.Determinant();
+            }
+        }
+
+        public int MultiThreadDeterminant(uint threadNumber)
+        {
+            ParametrizeThreadPool<int> threadPool = new ParametrizeThreadPool<int>(threadNumber);
+
+            for (uint i = 0; i < this.matrix.GetLength(0); i++)
+            {
+                int value = this.matrix[i, 0];
+                if (i % 2 != 0)
+                    value *= -1;
+
+                threadPool.Execute(new Task(this.Trim(i, 0), value));
+            }
+
+            lock (threadPool.results)
+            {
+                while (threadPool.results.Count != this.matrix.GetLength(0))
+                    Monitor.Wait(threadPool.results);
+            }
+
+            int summ = 0;
+            foreach (int value in threadPool.results)
+            {
+                summ += value;
+            }
+            return summ;
         }
     }
 }
