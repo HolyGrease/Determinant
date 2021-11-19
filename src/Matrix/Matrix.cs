@@ -6,76 +6,91 @@ namespace Matrix
 {
     public class Matrix
     {
-        private int[,] matrix;
+        private int[][] matrix;
 
         public Matrix()
         {
-            matrix = new int[2,2] {{1, 0}, {0, 1}};
+            matrix = new int[2][] {new int[]{1, 0}, new int[]{0, 1}};
         }
 
         public Matrix(uint size)
         {
             Random random = new Random();
 
-            this.matrix = new int[size, size];
+            this.matrix = new int[size][];
 
-            for (int i = 0; i < this.matrix.GetLength(0); i++)
-                for (int j = 0; j < this.matrix.GetLength(1); j++)
-                    this.matrix[i, j] = random.Next();
+            for (int i = 0; i < size; i++)
+            {
+                this.matrix[i] = new int[size];
+                for (int j = 0; j < size; j++)
+                    this.matrix[i][j] = random.Next();
+            }
+                
         }
 
-        public Matrix(int[,] matrix)
+        public Matrix(int[][] matrix)
         {
             this.matrix = matrix;
         }
 
         public int Determinant()
         {
-            if (this.matrix.GetLength(0) == 1)
-                return this.matrix[0, 0];
+            return Matrix.Determinant(this.matrix);
+        }
+        
+        public static int Determinant(int[][] matrix)
+        {
+            int det = 0;
+            if (matrix.Length != matrix[0].Length)
+                return -1;
+            if (matrix.Length == 1)
+                return matrix[0][0];
 
-            if (this.matrix.GetLength(0) == 2)
-                return this.matrix[0, 0] * this.matrix[1, 1] -
-                    this.matrix[0, 1] * this.matrix[1, 0];
+            for (int i = 0; i < matrix.Length; i++)
+                det += (int)Math.Pow(-1, i) * matrix[0][i] * Determinant(Minor(matrix, i));
 
-            int summ = 0;
-
-            for (uint i = 0; i < this.matrix.GetLength(0); i++)
-            {
-                int value = this.matrix[i, 0] * this.Trim(i, 0).Determinant();
-                if (i % 2 == 0)
-                    summ += value;
-                else
-                    summ -= value;
-            }
-            
-            GC.Collect();
-
-            return summ;
+            return det;
         }
 
-        public Matrix Trim(uint row, uint col)
+        public static int[][] Minor(int[][] matrix, int pos)
         {
-            // TODO add bounds check
-            int[,] result = new int[this.matrix.GetLength(0) - 1, this.matrix.GetLength(1) - 1];
+            int[][] minor = new int[matrix.Length - 1][];
+            for (int i = 0; i < minor.Length; i++)
+                minor[i] = new int[minor.Length];
 
-            for (uint i = 0, j = 0; i < this.matrix.GetLength(0); i++)
+            for (int i = 1; i < matrix.Length; i++)
+            {
+                for (int j = 0; j < pos; j++)
+                    minor[i - 1][j] = matrix[i][j];
+                for (int j = pos + 1; j < matrix.Length; j++)
+                    minor[i - 1][j - 1] = matrix[i][j];
+            }
+            return minor;
+        }
+        
+        public int[][] Trim(uint row, uint col)
+        {
+            int[][] result = new int[this.matrix.Length - 1][];
+
+            for (uint i = 0, j = 0; i < this.matrix.Length; i++)
             {
                 if (i == row)
                     continue;
 
-                for (uint k = 0, u = 0; k < this.matrix.GetLength(1); k++)
+                result[j] = new int[this.matrix.Length - 1];
+
+                for (uint k = 0, u = 0; k < this.matrix.Length; k++)
                 {
                     if (k == col)
                         continue;
 
-                    result[j, u] = this.matrix[i, k];
+                    result[j][u] = this.matrix[i][k];
                     u++;
                 }
                 j++;
             }
 
-            return new Matrix(result);
+            return result;
         }
 
         public void Print()
@@ -83,17 +98,17 @@ namespace Matrix
             for (int i = 0; i < this.matrix.GetLength(0); i++)
             {
                 for (int j = 0; j < this.matrix.GetLength(1); j++)
-                    Console.Write(this.matrix[i, j].ToString() + " ");
+                    Console.Write(this.matrix[i][j].ToString() + " ");
                 Console.WriteLine();
             }
         }
 
         class Task: ITask<int>
         {
-            private Matrix matrix;
+            private int[][] matrix;
             private int value;
 
-            public Task(Matrix matrix, int value)
+            public Task(int[][] matrix, int value)
             {
                 this.matrix = matrix;
                 this.value = value;
@@ -101,35 +116,33 @@ namespace Matrix
 
             public int Run()
             {
-                return value * this.matrix.Determinant();
+                return value * Matrix.Determinant(this.matrix);
             }
         }
 
         public int MultiThreadDeterminant(uint threadNumber)
         {
             ParametrizeThreadPool<int> threadPool = new ParametrizeThreadPool<int>(threadNumber);
+            if (matrix.Length != matrix[0].Length)
+                return -1;
+            if (matrix.Length == 1)
+                return matrix[0][0];
 
-            for (uint i = 0; i < this.matrix.GetLength(0); i++)
-            {
-                int value = this.matrix[i, 0];
-                if (i % 2 != 0)
-                    value *= -1;
-
-                threadPool.Execute(new Task(this.Trim(i, 0), value));
-            }
-
+            for (int i = 0; i < matrix.Length; i++)
+                threadPool.Execute(new Task(this.Trim(0, (uint)i), (int)Math.Pow(-1, i) * matrix[0][i]));
+            
             lock (threadPool.results)
             {
                 while (threadPool.results.Count != this.matrix.GetLength(0))
                     Monitor.Wait(threadPool.results);
             }
 
-            int summ = 0;
+            int det = 0;
             foreach (int value in threadPool.results)
             {
-                summ += value;
+                det += value;
             }
-            return summ;
+            return det;
         }
     }
 }

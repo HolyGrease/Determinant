@@ -62,58 +62,14 @@ namespace Matrix.Test
         }
 
         [TestMethod]
-        public void RandomTestSize16Thread4()
+        public void RandomTestSize10Thread4()
         {
-            Matrix matrix = new Matrix(12);
+            Matrix matrix = new Matrix(10);
 
             var assert = matrix.Determinant();
             var actual = matrix.MultiThreadDeterminant(4);
 
             Assert.AreEqual(assert, actual);
         }
-
-        // [TestMethod]
-        // public void RandomTestSize32Thread4()
-        // {
-        //     Matrix matrix = new Matrix(32);
-
-        //     int assert = matrix.Determinant();
-        //     int actual = matrix.MultiThreadDeterminant(4);
-
-        //     Assert.AreEqual(assert, actual);
-        // }
-
-        // [TestMethod]
-        // public void RandomTestSize64Thread4()
-        // {
-        //     Matrix matrix = new Matrix(64);
-
-        //     int assert = matrix.Determinant();
-        //     int actual = matrix.MultiThreadDeterminant(4);
-
-        //     Assert.AreEqual(assert, actual);
-        // }
-
-        // [TestMethod]
-        // public void RandomTestSize256Thread4()
-        // {
-        //     Matrix matrix = new Matrix(256);
-
-        //     int assert = matrix.Determinant();
-        //     int actual = matrix.MultiThreadDeterminant(4);
-
-        //     Assert.AreEqual(assert, actual);
-        // }
-
-        // [TestMethod]
-        // public void RandomTestSize512Thread4()
-        // {
-        //     Matrix matrix = new Matrix(512);
-
-        //     int assert = matrix.Determinant();
-        //     int actual = matrix.MultiThreadDeterminant(4);
-
-        //     Assert.AreEqual(assert, actual);
-        // }
     }
 }
